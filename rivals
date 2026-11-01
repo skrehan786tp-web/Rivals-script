@@ -1,0 +1,196 @@
+-- ============================================================
+-- GITHUB IMAGE LOADER & CUSTOM UI (ui.png & button.png)
+-- ============================================================
+
+-- Yahan apna GitHub username aur repo ka naam dalein
+local GITHUB_USER = "skrehan786tp-web"
+local GITHUB_REPO = "Rivals-script"
+local BRANCH      = "main"
+
+local BaseURL = "https://raw.githubusercontent.com/" .. GITHUB_USER .. "/" .. GITHUB_REPO .. "/" .. BRANCH .. "/"
+
+-- Function jo GitHub se photo download karke Roblox asset banata hai
+local function GetGitHubImage(fileName)
+    local getAsset = getcustomasset or getsynasset
+    if not getAsset then
+        warn("Aapka executor custom images support nahi karta!")
+        return ""
+    end
+
+    if not isfile(fileName) then
+        local success, imageData = pcall(function()
+            return game:HttpGet(BaseURL .. fileName)
+        end)
+        if success and imageData then
+            writefile(fileName, imageData)
+        else
+            warn("GitHub se image download nahi ho payi: " .. fileName)
+            return ""
+        end
+    end
+
+    return getAsset(fileName)
+end
+
+-- ScreenGui Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name           = "CoolModsProGitHubUI"
+ScreenGui.ResetOnSpawn   = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent         = (syn and syn.protect_gui) and syn.protect_gui(ScreenGui) or CoreGui
+
+-- 1. MAIN UI BACKGROUND (ui.png)
+local MainWindow = Instance.new("ImageLabel")
+MainWindow.Name                   = "MainWindow"
+MainWindow.Size                   = UDim2.new(0, 550, 0, 350)
+MainWindow.Position               = UDim2.new(0.5, -275, 0.5, -175)
+MainWindow.BackgroundTransparency = 1
+MainWindow.Image                  = GetGitHubImage("ui.png") -- Aapka ui.png yahan load hoga
+MainWindow.ScaleType              = Enum.ScaleType.Stretch
+MainWindow.Active                 = true
+MainWindow.Parent                 = ScreenGui
+
+-- Close Button (Top Right)
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size                   = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position               = UDim2.new(1, -38, 0, 10)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Text                   = "X"
+CloseBtn.TextColor3             = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize               = 16
+CloseBtn.Font                   = Enum.Font.GothamBold
+CloseBtn.Parent                 = MainWindow
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Container jisme saare features aur buttons aayenge
+local ContentBox = Instance.new("ScrollingFrame")
+ContentBox.Size                   = UDim2.new(0, 360, 0, 200)
+ContentBox.Position               = UDim2.new(0, 165, 0, 105)
+ContentBox.BackgroundTransparency = 1
+ContentBox.ScrollBarThickness     = 2
+ContentBox.Parent                 = MainWindow
+
+local UIList = Instance.new("UIListLayout")
+UIList.Padding   = UDim.new(0, 8)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+UIList.Parent    = ContentBox
+
+-- 2. CUSTOM BUTTON MAKER (button.png)
+local ButtonImageAsset = GetGitHubImage("button.png") -- Aapka button.png yahan load hoga
+
+local function CreateCustomFeature(featureName, callback)
+    local Row = Instance.new("Frame")
+    Row.Size                   = UDim2.new(1, -10, 0, 36)
+    Row.BackgroundColor3       = Color3.fromRGB(20, 10, 35)
+    Row.BackgroundTransparency = 0.4
+    Row.Parent                 = ContentBox
+
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent       = Row
+
+    local Label = Instance.new("TextLabel")
+    Label.Size                   = UDim2.new(0.6, 0, 1, 0)
+    Label.Position               = UDim2.new(0, 12, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text                   = featureName
+    Label.TextColor3             = Color3.fromRGB(255, 255, 255)
+    Label.Font                   = Enum.Font.GothamSemibold
+    Label.TextSize               = 13
+    Label.TextXAlignment         = Enum.TextXAlignment.Left
+    Label.Parent                 = Row
+
+    -- ImageButton jo aapke button.png ko use karega
+    local ImgBtn = Instance.new("ImageButton")
+    ImgBtn.Size                   = UDim2.new(0, 100, 0, 28)
+    ImgBtn.Position               = UDim2.new(1, -110, 0.5, -14)
+    ImgBtn.BackgroundTransparency = 1
+    ImgBtn.Image                  = ButtonImageAsset
+    ImgBtn.ScaleType              = Enum.ScaleType.Stretch
+    ImgBtn.Parent                 = Row
+
+    local StatusTxt = Instance.new("TextLabel")
+    StatusTxt.Size                   = UDim2.new(1, 0, 1, 0)
+    StatusTxt.BackgroundTransparency = 1
+    StatusTxt.Text                   = "" -- Agar button.png par pehle se "Execute" likha hai toh ise khali rakhein
+    StatusTxt.TextColor3             = Color3.fromRGB(255, 255, 255)
+    StatusTxt.Font                   = Enum.Font.GothamBold
+    StatusTxt.TextSize               = 11
+    StatusTxt.Parent                 = ImgBtn
+
+    ImgBtn.MouseButton1Click:Connect(function()
+        if callback then callback(StatusTxt) end
+    end)
+end
+
+-- ============================================================
+-- BUTTONS KO SCRIPT KE FEATURES SE CONNECT KARNA
+-- ============================================================
+
+CreateCustomFeature("Aimbot Assist", function()
+    CFG.Aimbot.Enabled = not CFG.Aimbot.Enabled
+    print("Aimbot:", CFG.Aimbot.Enabled)
+end)
+
+CreateCustomFeature("Silent Aim", function()
+    CFG.SilentAim.Enabled = not CFG.SilentAim.Enabled
+    print("Silent Aim:", CFG.SilentAim.Enabled)
+end)
+
+CreateCustomFeature("ESP Wallhack", function()
+    CFG.ESP.Enabled = not CFG.ESP.Enabled
+    print("ESP:", CFG.ESP.Enabled)
+end)
+
+CreateCustomFeature("Speed Hack", function()
+    CFG.Misc.SpeedHack = not CFG.Misc.SpeedHack
+    if not CFG.Misc.SpeedHack and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = 16 end
+    end
+    print("Speed Hack:", CFG.Misc.SpeedHack)
+end)
+
+-- ============================================================
+-- FLOATING MOBILE BUTTON (button.png se UI Open/Close karne ke liye)
+-- ============================================================
+local FloatToggle = Instance.new("ImageButton")
+FloatToggle.Size                   = UDim2.new(0, 110, 0, 38)
+FloatToggle.Position               = UDim2.new(0, 20, 0.5, -19)
+FloatToggle.BackgroundTransparency = 1
+FloatToggle.Image                  = ButtonImageAsset
+FloatToggle.Active                 = true
+FloatToggle.Draggable              = true
+FloatToggle.Parent                 = ScreenGui
+
+FloatToggle.MouseButton1Click:Connect(function()
+    MainWindow.Visible = not MainWindow.Visible
+end)
+
+-- Window Dragging Logic
+do
+    local dragging, dragStart, startPos
+    MainWindow.InputBegan:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            dragging  = true
+            dragStart = inp.Position
+            startPos  = MainWindow.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(inp)
+        if dragging and (inp.UserInputType == Enum.UserInputType.MouseMove or inp.UserInputType == Enum.UserInputType.Touch) then
+            local delta = inp.Position - dragStart
+            MainWindow.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(inp)
+        if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+end
